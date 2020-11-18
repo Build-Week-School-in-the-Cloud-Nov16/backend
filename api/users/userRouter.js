@@ -1,0 +1,75 @@
+const router = require('express').Router();
+
+const Users = require('./userModel.js');
+const restricted = require('../../auth/restricted.js');
+
+router.get('/', restricted, (req, res) => {
+  Users.getAllUsers()
+    .then(users => {
+      res.status(200).json({data:users});
+    })
+    .catch(err => res.send(err));
+});
+
+
+router.get('/filter',restricted, (req, res) => {
+  console.log("hi")
+  const filters = req.query;
+  Users.filterUsersBy(filters)
+    .then(users => {
+      res.status(200).json({data:users});
+    })
+    .catch(err => res.send(err));
+});
+
+router.get('/:id', restricted, (req, res) => {
+  const { id } = req.params;
+  
+  Users.getUserById(id)
+    .then(user => {
+      res.status(200).json({data:user});
+    })
+    .catch(err => res.send(err));
+});
+
+
+router.put('/:id', restricted, (req, res) => {
+  const { id } = req.params;
+  const changes = req.body;
+
+  Users.getUserById(id)
+  .then(user => {
+    if (user) {
+      Users.updateUser(changes, id)
+      .then(updatedUser => {
+        res.json(updatedUser);
+      });
+    } else {
+      res.status(404).json({ message: 'Could not find user with given id' });
+    }
+  })
+  .catch (err => {
+    res.status(500).json({ message: 'Failed to update user' });
+  });
+});
+
+
+
+router.delete('/:id', restricted,(req, res) => {
+  const  {id}  = req.params;
+
+  Users.deleteUser(id)
+  .then(deleted => {
+    if (deleted) {
+      res.json({ message: 'user deleted' });
+    } else {
+      res.status(404).json({ message: 'Could not find user with given id' });
+    }
+  })
+  .catch(err => {
+    res.status(500).json({ message: 'Failed to delete user' });
+  });
+});
+
+
+module.exports = router;
